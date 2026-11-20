@@ -27,3 +27,19 @@ class LLM:
         if not m:
             raise ValueError("LLM returned no JSON")
         return json.loads(m.group(0))
+
+    def web_json(self, system: str, user: str, max_uses: int = 6, max_tokens: int = 4000) -> dict:
+        """Claude with the server-side web_search tool; returns the JSON object in its final answer."""
+        tools = [{"type": "web_search_20250305", "name": "web_search", "max_uses": max_uses}]
+        messages = [{"role": "user", "content": user}]
+        for _ in range(4):                                  # handle pause_turn on long searches
+            r = self.client.messages.create(model=self.model, max_tokens=max_tokens, system=system,
+                                            tools=tools, messages=messages)
+            if getattr(r, "stop_reason", "") != "pause_turn":
+                break
+            messages = messages + [{"role": "assistant", "content": r.content}]
+        text = "".join(b.text for b in r.content if getattr(b, "type", "") == "text")
+        m = re.search(r"\{.*\}", text, re.S)
+        if not m:
+            raise ValueError("Claude returned no JSON")
+        return json.loads(m.group(0))

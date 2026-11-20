@@ -1,10 +1,12 @@
 """Polite HTTP: robots.txt, per-host rate limit, retries w/ backoff + jitter, 429 handling."""
-import random, time
+import os, random, time
 from urllib import robotparser
 from urllib.parse import urlparse
 import requests
 
-UA = "LeadFinderMVP/0.1 (+contact: you@example.com)"  # honest UA; no spoofing/evasion
+# Honest, identifying UA (OSM/Nominatim require one; placeholder contacts get blocked). Set LEADFINDER_CONTACT to your email/URL.
+CONTACT = os.getenv("LEADFINDER_CONTACT", "https://github.com/puneet482")
+UA = f"LeadFinderMVP/0.1 ({CONTACT})"
 
 
 class PoliteFetcher:
